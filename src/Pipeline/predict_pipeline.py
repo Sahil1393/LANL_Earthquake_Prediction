@@ -6,12 +6,13 @@ import pandas as pd
 from src.exception import CustomException
 from src.logger import logging
 from src.utils import load_object
-from src.components.data_transformation import DataTransformation
+from src.components.feature_engineering import FeatureEngineering
 
 
 class PredictPipeline:
     def __init__(self):
         self.model_path = "artifacts/final_model.pkl"
+        self.feature_engineering = FeatureEngineering()
 
     def predict(self, acoustic_data):
         """
@@ -49,19 +50,15 @@ class PredictPipeline:
                     "acoustic_data": np.array(acoustic_data)
                 })
 
-            data_transformation = DataTransformation()
-
-            features = data_transformation.create_features(segment)
+            features = self.feature_engineering.create_features(segment)
 
             feature_df = pd.DataFrame([features])
-
             feature_df = feature_df[feature_columns]
 
             fold_predictions = []
 
             for model, scaler in zip(models, scalers):
                 feature_scaled = scaler.transform(feature_df)
-
                 pred = model.predict(feature_scaled)
                 fold_predictions.append(pred[0])
 

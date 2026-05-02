@@ -17,23 +17,16 @@ class DataIngestion:
     def __init__(self):
         self.ingestion_config = DataIngestionConfig()
 
-    def initiate_data_ingestion(self, input_file_path, nrows=5_000_000):
+    def initiate_data_ingestion(self, input_file_path, nrows=500_000):
         """
-        Reads LANL Earthquake Prediction training data.
+        Reads LANL earthquake train.csv.
 
-        Expected columns:
+        Required columns:
         - acoustic_data
         - time_to_failure
-
-        Parameters:
-        input_file_path: path of train.csv
-        nrows: number of rows to read from train.csv
-
-        Returns:
-        raw_data_path: path where raw.csv is saved
         """
 
-        logging.info("Entered the data ingestion component")
+        logging.info("Entered data ingestion component")
 
         try:
             logging.info(f"Reading data from: {input_file_path}")
@@ -67,3 +60,15 @@ class DataIngestion:
 
         except Exception as e:
             raise CustomException(e, sys)
+
+
+if __name__ == "__main__":
+    obj = DataIngestion()
+
+    raw_data_path = obj.initiate_data_ingestion(
+        input_file_path="train.csv",
+        nrows=500_000
+    )
+
+    print("Data ingestion completed successfully")
+    print("Raw data saved at:", raw_data_path)

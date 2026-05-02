@@ -2,8 +2,8 @@ import os
 import sys
 from dataclasses import dataclass
 
-import numpy as np
 import lightgbm as lgb
+import numpy as np
 
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import KFold
@@ -57,7 +57,7 @@ class ModelTrainer:
             all_evals = []
 
             for fold, (train_idx, val_idx) in enumerate(kf.split(X)):
-                logging.info(f"===== FOLD {fold + 1} =====")
+                logging.info(f"========== FOLD {fold + 1} STARTED ==========")
 
                 X_train = X.iloc[train_idx]
                 X_val = X.iloc[val_idx]
@@ -72,14 +72,27 @@ class ModelTrainer:
 
                 evals_result = {}
 
+                train_dataset = lgb.Dataset(
+                    X_train_scaled,
+                    label=y_train
+                )
+
+                valid_dataset = lgb.Dataset(
+                    X_val_scaled,
+                    label=y_val
+                )
+
                 model = lgb.train(
                     params=params,
-                    train_set=lgb.Dataset(X_train_scaled, label=y_train),
+                    train_set=train_dataset,
                     valid_sets=[
-                        lgb.Dataset(X_train_scaled, label=y_train),
-                        lgb.Dataset(X_val_scaled, label=y_val)
+                        train_dataset,
+                        valid_dataset
                     ],
-                    valid_names=["train", "valid"],
+                    valid_names=[
+                        "train",
+                        "valid"
+                    ],
                     num_boost_round=4000,
                     callbacks=[
                         lgb.early_stopping(200),
@@ -100,6 +113,8 @@ class ModelTrainer:
                 models.append(model)
                 scalers.append(scaler)
                 all_evals.append(evals_result)
+
+                logging.info(f"========== FOLD {fold + 1} COMPLETED ==========")
 
             final_mae = mean_absolute_error(y, oof_preds)
 

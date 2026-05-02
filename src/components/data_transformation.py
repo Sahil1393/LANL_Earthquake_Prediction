@@ -30,18 +30,10 @@ class DataTransformation:
         step_size=10_000
     ):
         """
-        Converts raw LANL earthquake data into ML-ready features.
-
-        Input:
-            raw_data_path: path of raw.csv from data ingestion
-
-        Output:
-            X: feature DataFrame
-            y: target array
-            feature_columns_file_path: saved feature column path
+        Converts raw data into model-ready X and y.
         """
 
-        logging.info("Entered the data transformation component")
+        logging.info("Entered data transformation component")
 
         try:
             logging.info(f"Reading raw data from: {raw_data_path}")
@@ -56,8 +48,11 @@ class DataTransformation:
                 step_size=step_size
             )
 
-            logging.info(f"Feature DataFrame created. Shape: {X.shape}")
-            logging.info(f"Target array created. Shape: {y.shape}")
+            if X.empty:
+                raise ValueError(
+                    "Feature dataframe is empty. "
+                    "Increase nrows or reduce segment_size."
+                )
 
             feature_columns = list(X.columns)
 
@@ -79,3 +74,18 @@ class DataTransformation:
 
         except Exception as e:
             raise CustomException(e, sys)
+
+
+if __name__ == "__main__":
+    obj = DataTransformation()
+
+    X, y, feature_columns_path = obj.initiate_data_transformation(
+        raw_data_path="artifacts/raw.csv",
+        segment_size=150_000,
+        step_size=10_000
+    )
+
+    print("Data transformation completed successfully")
+    print("X shape:", X.shape)
+    print("y shape:", y.shape)
+    print("Feature columns saved at:", feature_columns_path)
