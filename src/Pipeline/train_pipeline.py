@@ -12,7 +12,7 @@ class TrainPipeline:
     def __init__(
         self,
         input_file_path,
-        nrows=5_000_000,
+        nrows=500_000,
         segment_size=150_000,
         step_size=10_000
     ):
@@ -58,11 +58,12 @@ class TrainPipeline:
 if __name__ == "__main__":
     pipeline = TrainPipeline(
         input_file_path="train.csv",
-        nrows=5_000_000,
+        nrows=500_000,
         segment_size=150_000,
         step_size=10_000
     )
 
     result = pipeline.run_pipeline()
 
+    print("Training completed successfully")
     print(result)
