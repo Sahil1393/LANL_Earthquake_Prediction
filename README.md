@@ -114,6 +114,10 @@ The API will be available at `http://127.0.0.1:8080`.
 }
 ```
 
+## Contributors
+
+- **Sahil** ([@Sahil1393](https://github.com/Sahil1393)) - Project Lead & Developer
+
 ## License
 
 This project is licensed under the MIT License - see the `LICENSE` file for details.
