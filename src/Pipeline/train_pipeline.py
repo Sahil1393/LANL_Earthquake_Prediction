@@ -57,7 +57,7 @@ class TrainPipeline:
 
 if __name__ == "__main__":
     pipeline = TrainPipeline(
-        input_file_path="train.csv",
+        input_file_path="notebook/data/train.csv",
         nrows=500_000,
         segment_size=150_000,
         step_size=10_000

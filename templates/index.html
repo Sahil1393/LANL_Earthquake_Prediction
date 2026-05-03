@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Earthquake Prediction</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Poppins',sans-serif;
+    min-height:100vh;
+    background: linear-gradient(135deg,#667eea,#764ba2);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+/* Glass Card */
+.container{
+    width:100%;
+    max-width:650px;
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(20px);
+    border-radius:20px;
+    padding:35px;
+    border:1px solid rgba(255,255,255,0.2);
+    box-shadow:0 20px 60px rgba(0,0,0,0.3);
+}
+
+/* Header */
+.header{
+    text-align:center;
+    margin-bottom:25px;
+}
+
+.header h1{
+    font-size:2rem;
+    color:#fff;
+}
+
+.header p{
+    color:rgba(255,255,255,0.7);
+    font-size:0.9rem;
+}
+
+.badge{
+    margin-top:10px;
+    display:inline-block;
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:0.75rem;
+    background:rgba(255,255,255,0.2);
+    color:white;
+}
+
+/* Input */
+textarea{
+    width:100%;
+    margin-top:15px;
+    padding:14px;
+    border-radius:12px;
+    border:none;
+    outline:none;
+    resize:none;
+    height:130px;
+    font-family:monospace;
+    background:rgba(255,255,255,0.2);
+    color:white;
+}
+
+textarea::placeholder{
+    color:rgba(255,255,255,0.6);
+}
+
+/* Buttons */
+.btn{
+    width:100%;
+    margin-top:15px;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.btn-primary{
+    background:#fff;
+    color:#333;
+}
+
+.btn-secondary{
+    background:rgba(255,255,255,0.2);
+    color:white;
+}
+
+.btn:hover{
+    transform:scale(1.02);
+}
+
+/* Result */
+.result-box{
+    margin-top:20px;
+    padding:18px;
+    border-radius:12px;
+    display:none;
+}
+
+.success{
+    background:rgba(0,255,150,0.2);
+}
+
+.error{
+    background:rgba(255,0,0,0.2);
+}
+
+.result-value{
+    font-size:2rem;
+    font-weight:bold;
+}
+
+/* API Links */
+.api-links{
+    margin-top:25px;
+    display:flex;
+    justify-content:center;
+    gap:10px;
+}
+
+.api-link{
+    padding:6px 12px;
+    border-radius:8px;
+    background:rgba(255,255,255,0.2);
+    text-decoration:none;
+    color:white;
+    font-size:0.8rem;
+}
+
+.api-link:hover{
+    background:white;
+    color:#333;
+}
+
+/* Spinner */
+.spinner{
+    width:16px;
+    height:16px;
+    border:2px solid rgba(255,255,255,0.3);
+    border-top:2px solid white;
+    border-radius:50%;
+    display:inline-block;
+    animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+    to{transform:rotate(360deg);}
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="header">
+    <h1>🌍 Earthquake Prediction</h1>
+    <p>LANL Seismic Signal Analysis</p>
+    <div class="badge">AI Model · High Accuracy</div>
+</div>
+
+<textarea id="acoustic_input"
+placeholder="Paste comma-separated acoustic data..."></textarea>
+
+<button class="btn btn-secondary" onclick="loadSample()">
+    Load Sample Data
+</button>
+
+<button class="btn btn-primary" id="predict-btn" onclick="predict()">
+    Predict Time to Failure
+</button>
+
+<div class="result-box" id="result-box">
+    <div id="result-content"></div>
+</div>
+
+<div class="api-links">
+    <a class="api-link" href="/docs" target="_blank">Swagger</a>
+    <a class="api-link" href="/redoc" target="_blank">ReDoc</a>
+    <a class="api-link" href="/health" target="_blank">Health</a>
+</div>
+
+</div>
+
+<script>
+function loadSample(){
+    const sample = Array.from({length:1000},(_,i)=>{
+        return Math.round(Math.sin(i*0.05)*8+5+(Math.random()-0.5)*6);
+    });
+    document.getElementById("acoustic_input").value = sample.join(", ");
+}
+
+async function predict(){
+    const btn=document.getElementById("predict-btn");
+    const box=document.getElementById("result-box");
+    const content=document.getElementById("result-content");
+    const raw=document.getElementById("acoustic_input").value.trim();
+
+    if(!raw) return showError("Enter data");
+
+    let values;
+    try{
+        values=raw.split(",").map(v=>parseFloat(v.trim()));
+    }catch{
+        return showError("Invalid input");
+    }
+
+    btn.disabled=true;
+    btn.innerHTML='<span class="spinner"></span> Predicting...';
+
+    try{
+        const res=await fetch("/predict",{
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({acoustic_data:values})
+        });
+
+        const data=await res.json();
+
+        if(!res.ok) return showError("Prediction failed");
+
+        box.className="result-box success";
+        box.style.display="block";
+        content.innerHTML=`
+            <div class="result-value">
+                ${data.time_to_failure_seconds.toFixed(4)} sec
+            </div>
+        `;
+    }catch{
+        showError("Server error");
+    }
+
+    btn.disabled=false;
+    btn.innerHTML="Predict Time to Failure";
+}
+
+function showError(msg){
+    const box=document.getElementById("result-box");
+    const content=document.getElementById("result-content");
+
+    box.className="result-box error";
+    box.style.display="block";
+    content.innerHTML=msg;
+}
+</script>
+
+</body>
+</html>
