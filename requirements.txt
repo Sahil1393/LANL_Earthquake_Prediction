@@ -5,6 +5,11 @@ matplotlib
 scikit-learn
 catboost
 xgboost
+lightgbm
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
 Flask
 dill
 
