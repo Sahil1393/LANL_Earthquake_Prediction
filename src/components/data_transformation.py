@@ -30,7 +30,7 @@ class DataTransformation:
         step_size=10_000
     ):
         """
-        Converts raw data into model-ready X and y.
+        Converts raw data into engineered features and target values.
         """
 
         logging.info("Entered data transformation component")

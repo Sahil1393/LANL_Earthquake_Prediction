@@ -15,16 +15,6 @@ class PredictPipeline:
         self.feature_engineering = FeatureEngineering()
 
     def predict(self, acoustic_data):
-        """
-        Predicts time_to_failure.
-
-        acoustic_data can be:
-        - list
-        - numpy array
-        - pandas Series
-        - pandas DataFrame with acoustic_data column
-        """
-
         try:
             logging.info("Prediction pipeline started")
 
@@ -53,6 +43,7 @@ class PredictPipeline:
             features = self.feature_engineering.create_features(segment)
 
             feature_df = pd.DataFrame([features])
+
             feature_df = feature_df[feature_columns]
 
             fold_predictions = []
@@ -62,8 +53,8 @@ class PredictPipeline:
                 pred = model.predict(feature_scaled)
                 fold_predictions.append(pred[0])
 
-            final_prediction = np.mean(fold_predictions)
-            final_prediction = np.clip(final_prediction, 0, 16)
+            final_prediction = float(np.mean(fold_predictions))
+            final_prediction = float(np.clip(final_prediction, 0, 16))
 
             logging.info(f"Prediction completed: {final_prediction}")
 
@@ -74,10 +65,21 @@ class PredictPipeline:
 
 
 if __name__ == "__main__":
-    sample_df = pd.read_csv("train.csv", nrows=150_000)
+    print("=" * 70)
+    print("PREDICTION PIPELINE STARTED")
+    print("=" * 70)
+
+    sample_df = pd.read_csv(
+        "notebook/data/train.csv",
+        nrows=150_000
+    )
 
     predict_pipeline = PredictPipeline()
 
     prediction = predict_pipeline.predict(sample_df)
 
     print("Predicted time_to_failure:", prediction)
+
+    print("=" * 70)
+    print("PREDICTION PIPELINE COMPLETED")
+    print("=" * 70)

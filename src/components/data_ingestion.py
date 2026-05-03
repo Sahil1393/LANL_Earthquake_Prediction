@@ -19,7 +19,7 @@ class DataIngestion:
 
     def initiate_data_ingestion(self, input_file_path, nrows=500_000):
         """
-        Reads LANL earthquake train.csv.
+        Reads LANL earthquake training data.
 
         Required columns:
         - acoustic_data
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     obj = DataIngestion()
 
     raw_data_path = obj.initiate_data_ingestion(
-        input_file_path="train.csv",
+        input_file_path="notebook/data/train.csv",
         nrows=500_000
     )
 
