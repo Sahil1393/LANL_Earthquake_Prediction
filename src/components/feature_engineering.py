@@ -13,7 +13,8 @@ class FeatureEngineering:
 
     def create_features(self, segment):
         """
-        Creates features from one acoustic_data segment.
+        Creates statistical, rolling, chunk-based, and FFT features
+        from one acoustic_data segment.
         """
 
         try:
@@ -27,7 +28,7 @@ class FeatureEngineering:
 
             features = {}
 
-            # Basic statistics
+            # Basic statistical features
             features["mean"] = x.mean()
             features["std"] = x.std()
             features["max"] = x.max()
@@ -35,7 +36,7 @@ class FeatureEngineering:
             features["range"] = x.max() - x.min()
             features["median"] = np.median(x)
 
-            # Absolute features
+            # Absolute value features
             abs_x = np.abs(x)
 
             features["abs_mean"] = abs_x.mean()
@@ -53,12 +54,12 @@ class FeatureEngineering:
             features["q95"] = np.percentile(x, 95)
             features["q99"] = np.percentile(x, 99)
 
-            # Signal features
+            # Energy and signal features
             features["energy"] = np.sum(x ** 2) / len(x)
             features["ptp"] = np.ptp(x)
             features["zero_cross"] = np.mean(np.diff(np.sign(x)) != 0)
 
-            # Trend
+            # Trend feature
             features["trend"] = np.polyfit(np.arange(len(x)), x, 1)[0]
 
             # Distribution features
@@ -67,7 +68,7 @@ class FeatureEngineering:
             features["skew"] = series.skew()
             features["kurtosis"] = series.kurtosis()
 
-            # Rolling features
+            # Rolling window features
             for window in [100, 500, 1000, 5000]:
                 rolling_series = series.rolling(window)
 
@@ -76,7 +77,7 @@ class FeatureEngineering:
                 features[f"rolling_max_{window}"] = rolling_series.max().mean()
                 features[f"rolling_min_{window}"] = rolling_series.min().mean()
 
-            # Chunk features
+            # Chunk-based features
             chunks = 5
             chunk_size = len(x) // chunks
 
@@ -100,7 +101,7 @@ class FeatureEngineering:
             features["chunk_mean_diff"] = chunk_means[-1] - chunk_means[0]
             features["chunk_std_diff"] = chunk_stds[-1] - chunk_stds[0]
 
-            # FFT features
+            # FFT frequency-domain features
             fft_values = np.fft.rfft(x)
             fft_magnitude = np.abs(fft_values)
 
@@ -110,7 +111,7 @@ class FeatureEngineering:
             features["fft_min"] = fft_magnitude.min()
             features["fft_median"] = np.median(fft_magnitude)
 
-            # Clean NaN and infinity
+            # Clean NaN and infinity values
             for key, value in features.items():
                 if pd.isna(value) or np.isinf(value):
                     features[key] = 0
@@ -127,7 +128,7 @@ class FeatureEngineering:
         step_size=10_000
     ):
         """
-        Converts raw LANL data into X and y.
+        Converts raw acoustic signal data into ML-ready feature rows.
 
         X = engineered feature dataframe
         y = time_to_failure target array
@@ -165,3 +166,8 @@ class FeatureEngineering:
 
         except Exception as e:
             raise CustomException(e, sys)
+
+
+if __name__ == "__main__":
+    print("FeatureEngineering is a helper component.")
+    print("Run data_transformation.py or train_pipeline.py instead.")

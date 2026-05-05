@@ -26,3 +26,8 @@ def load_object(file_path):
 
     except Exception as e:
         raise CustomException(e, sys)
+<<<<<<< HEAD
+    
+=======
+>>>>>>> 14c5b30a5b1584e8e155a6cff90d9232f9af800e
+3333
