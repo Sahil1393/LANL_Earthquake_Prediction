@@ -31,14 +31,34 @@ This is a challenging problem due to:
 ---
 
 ## 🗂️ Project Structure
+---
 
-```
-LANL_Earthquake_Prediction/
+LANL_EARTHQUAKE_PREDICTION/
 │
-├── artifacts/                # Models, outputs, processed data
-├── catboost_info/            # CatBoost logs
-├── logs/                     # Application logs
-├── notebook/                 # Dataset & notebooks
+├── artifacts/                 # Generated files (datasets, models, preprocessor)
+│   ├── raw.csv
+│   ├── transformed_train.csv
+│   ├── feature_columns.pkl
+│   ├── final_model.pkl
+│   ├── model_report.csv
+│   ├── deep_learning_model.keras
+│   ├── deep_learning_scaler.pkl
+│   └── deep_learning_metadata.pkl
+│
+├── catboost_info/
+│   ├── catboost_training.json
+│   ├── learn_error.tsv
+│   ├── time_left.tsv
+│   ├── learn/
+│   └── tmp/
+│
+├── logs/
+│
+├── notebook/               # Jupyter notebooks (EDA & experiments)
+│   ├── data/
+│   │   └── train.csv
+│   ├── EDA.ipynb
+│   └── Model_train.ipynb
 │
 ├── src/
 │   ├── components/
@@ -46,34 +66,26 @@ LANL_Earthquake_Prediction/
 │   │   ├── data_transformation.py
 │   │   ├── feature_engineering.py
 │   │   ├── model_trainer.py
-│   │   ├── deep_learning_trainer.py
+│   │   └── deep_learning_trainer.py
 │   │
 │   ├── pipeline/
 │   │   ├── train_pipeline.py
 │   │   ├── predict_pipeline.py
-│   │   ├── deep_learning_pipeline.py
+│   │   └── deep_learning_pipeline.py
 │   │
 │   ├── exception.py
 │   ├── logger.py
 │   └── utils.py
 │
+├── templates/
+│   | index.html
+|
+│__ venv              # Virtual environment
+├── app.py
 ├── requirements.txt
+├── setup.py
 ├── README.md
 └── LICENSE
-```
-
----
-
-## ⚙️ Tech Stack
-
-* **Python 3.10+**
-* **NumPy, Pandas**
-* **Scikit-learn**
-* **XGBoost / CatBoost**
-* **TensorFlow / Keras**
-* **Pickle**
-* **Logging**
-
 ---
 
 ## 🔄 ML Pipeline Workflow
@@ -124,15 +136,16 @@ notebook/data/train.csv
 ## 📦 Output
 
 ```
-artifacts/
-├── model.pkl
-|__deep_learning_metadata.pkl
-|__deep_learning_model.keras
-|__deep_learning_scaler.pkl
-├── feature_columns.pkl
-|__final_model.pkl
-└── processed_data/
-```
+
+├── artifacts/
+│   ├── raw.csv
+│   ├── transformed_train.csv
+│   ├── feature_columns.pkl
+│   ├── final_model.pkl
+│   ├── model_report.csv
+│   ├── deep_learning_model.keras
+│   ├── deep_learning_scaler.pkl
+│   └── deep_learning_metadata.pkl
 
 ---
 

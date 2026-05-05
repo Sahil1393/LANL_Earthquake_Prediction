@@ -29,30 +29,28 @@ class FeatureEngineering:
             features = {}
 
             # Basic statistical features
-            features["mean"] = x.mean()
-            features["std"] = x.std()
-            features["max"] = x.max()
-            features["min"] = x.min()
-            features["range"] = x.max() - x.min()
+            features["mean"] = np.mean(x)
+            features["std"] = np.std(x)
+            features["max"] = np.max(x)
+            features["min"] = np.min(x)
+            features["range"] = np.max(x) - np.min(x)
             features["median"] = np.median(x)
 
             # Absolute value features
             abs_x = np.abs(x)
 
-            features["abs_mean"] = abs_x.mean()
-            features["abs_std"] = abs_x.std()
-            features["abs_max"] = abs_x.max()
+            features["abs_mean"] = np.mean(abs_x)
+            features["abs_std"] = np.std(abs_x)
+            features["abs_max"] = np.max(abs_x)
+            features["abs_min"] = np.min(abs_x)
 
             # Quantile features
-            features["q01"] = np.percentile(x, 1)
-            features["q05"] = np.percentile(x, 5)
-            features["q10"] = np.percentile(x, 10)
-            features["q25"] = np.percentile(x, 25)
-            features["q50"] = np.percentile(x, 50)
-            features["q75"] = np.percentile(x, 75)
-            features["q90"] = np.percentile(x, 90)
-            features["q95"] = np.percentile(x, 95)
-            features["q99"] = np.percentile(x, 99)
+            for q in [1, 5, 10, 25, 50, 75, 90, 95, 99]:
+                features[f"q{q:02d}"] = np.percentile(x, q)
+
+            # Absolute quantile features
+            for q in [1, 5, 10, 25, 50, 75, 90, 95, 99]:
+                features[f"abs_q{q:02d}"] = np.percentile(abs_x, q)
 
             # Energy and signal features
             features["energy"] = np.sum(x ** 2) / len(x)
@@ -60,7 +58,8 @@ class FeatureEngineering:
             features["zero_cross"] = np.mean(np.diff(np.sign(x)) != 0)
 
             # Trend feature
-            features["trend"] = np.polyfit(np.arange(len(x)), x, 1)[0]
+            idx = np.arange(len(x), dtype=np.float32)
+            features["trend"] = np.polyfit(idx, x, 1)[0]
 
             # Distribution features
             series = pd.Series(x)
@@ -68,14 +67,44 @@ class FeatureEngineering:
             features["skew"] = series.skew()
             features["kurtosis"] = series.kurtosis()
 
-            # Rolling window features
-            for window in [100, 500, 1000, 5000]:
-                rolling_series = series.rolling(window)
+            # Difference features
+            diff_x = np.diff(x)
 
-                features[f"rolling_mean_{window}"] = rolling_series.mean().mean()
-                features[f"rolling_std_{window}"] = rolling_series.std().mean()
-                features[f"rolling_max_{window}"] = rolling_series.max().mean()
-                features[f"rolling_min_{window}"] = rolling_series.min().mean()
+            if len(diff_x) > 0:
+                features["diff_mean"] = np.mean(diff_x)
+                features["diff_std"] = np.std(diff_x)
+                features["diff_max"] = np.max(diff_x)
+                features["diff_min"] = np.min(diff_x)
+                features["diff_abs_mean"] = np.mean(np.abs(diff_x))
+            else:
+                features["diff_mean"] = 0
+                features["diff_std"] = 0
+                features["diff_max"] = 0
+                features["diff_min"] = 0
+                features["diff_abs_mean"] = 0
+
+            # Rolling window features
+            for window in [100, 500, 1000, 5000, 10000]:
+                if len(series) >= window:
+                    rolling_series = series.rolling(window=window)
+
+                    features[f"rolling_mean_{window}"] = (
+                        rolling_series.mean().dropna().mean()
+                    )
+                    features[f"rolling_std_{window}"] = (
+                        rolling_series.std().dropna().mean()
+                    )
+                    features[f"rolling_max_{window}"] = (
+                        rolling_series.max().dropna().mean()
+                    )
+                    features[f"rolling_min_{window}"] = (
+                        rolling_series.min().dropna().mean()
+                    )
+                else:
+                    features[f"rolling_mean_{window}"] = 0
+                    features[f"rolling_std_{window}"] = 0
+                    features[f"rolling_max_{window}"] = 0
+                    features[f"rolling_min_{window}"] = 0
 
             # Chunk-based features
             chunks = 5
@@ -86,17 +115,32 @@ class FeatureEngineering:
 
             for i in range(chunks):
                 start = i * chunk_size
-                end = (i + 1) * chunk_size
 
-                chunk = x[start:end]
+                if i == chunks - 1:
+                    end = len(x)
+                else:
+                    end = (i + 1) * chunk_size
 
-                features[f"chunk_{i}_mean"] = chunk.mean()
-                features[f"chunk_{i}_std"] = chunk.std()
-                features[f"chunk_{i}_max"] = chunk.max()
-                features[f"chunk_{i}_min"] = chunk.min()
+                chunk_data = x[start:end]
 
-                chunk_means.append(chunk.mean())
-                chunk_stds.append(chunk.std())
+                if len(chunk_data) == 0:
+                    chunk_mean = 0
+                    chunk_std = 0
+                    chunk_max = 0
+                    chunk_min = 0
+                else:
+                    chunk_mean = np.mean(chunk_data)
+                    chunk_std = np.std(chunk_data)
+                    chunk_max = np.max(chunk_data)
+                    chunk_min = np.min(chunk_data)
+
+                features[f"chunk_{i}_mean"] = chunk_mean
+                features[f"chunk_{i}_std"] = chunk_std
+                features[f"chunk_{i}_max"] = chunk_max
+                features[f"chunk_{i}_min"] = chunk_min
+
+                chunk_means.append(chunk_mean)
+                chunk_stds.append(chunk_std)
 
             features["chunk_mean_diff"] = chunk_means[-1] - chunk_means[0]
             features["chunk_std_diff"] = chunk_stds[-1] - chunk_stds[0]
@@ -105,10 +149,10 @@ class FeatureEngineering:
             fft_values = np.fft.rfft(x)
             fft_magnitude = np.abs(fft_values)
 
-            features["fft_mean"] = fft_magnitude.mean()
-            features["fft_std"] = fft_magnitude.std()
-            features["fft_max"] = fft_magnitude.max()
-            features["fft_min"] = fft_magnitude.min()
+            features["fft_mean"] = np.mean(fft_magnitude)
+            features["fft_std"] = np.std(fft_magnitude)
+            features["fft_max"] = np.max(fft_magnitude)
+            features["fft_min"] = np.min(fft_magnitude)
             features["fft_median"] = np.median(fft_magnitude)
 
             # Clean NaN and infinity values
@@ -143,10 +187,20 @@ class FeatureEngineering:
                 if column not in df.columns:
                     raise ValueError(f"Missing required column: {column}")
 
+            if len(df) < segment_size:
+                logging.warning(
+                    f"Data length {len(df)} is smaller than segment_size "
+                    f"{segment_size}. Returning empty X and y."
+                )
+                return pd.DataFrame(), np.array([])
+
             X = []
             y = []
 
-            for start in range(0, len(df) - segment_size, step_size):
+            total_segments = 0
+
+            # +1 is important so the final possible segment is included
+            for start in range(0, len(df) - segment_size + 1, step_size):
                 end = start + segment_size
 
                 segment = df.iloc[start:end]
@@ -156,9 +210,12 @@ class FeatureEngineering:
                 X.append(features)
                 y.append(segment["time_to_failure"].values[-1])
 
+                total_segments += 1
+
             X = pd.DataFrame(X)
             y = np.array(y)
 
+            logging.info(f"Total segments created: {total_segments}")
             logging.info(f"Feature dataframe created. Shape: {X.shape}")
             logging.info(f"Target array created. Shape: {y.shape}")
 
@@ -170,4 +227,4 @@ class FeatureEngineering:
 
 if __name__ == "__main__":
     print("FeatureEngineering is a helper component.")
-    print("Run data_transformation.py or train_pipeline.py instead.")
+    print("Run data_ingestion.py, data_transformation.py, or train_pipeline.py instead.")
