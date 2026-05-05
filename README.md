@@ -211,14 +211,22 @@ python src/pipeline/predict_pipeline.py
 
 ---
 
-## 👩‍💻 Author
+## 👥 Authors
 
-**Shraddha Landge**
-GitHub: https://github.com/shraddha365
-LinkedIn: https://www.linkedin.com/in/shraddha-landge
-Email: [Official.shraddha.landge@gmail.com](mailto:Official.shraddha.landge@gmail.com)
+**Sahil Gupta** | Enrollment No: 220220357
+GitHub: https://github.com/Sahil1393 | LinkedIn: https://www.linkedin.com/in/thatssahil/
+
+**Safa Janjirkar** | Enrollment No: 220221373
+GitHub: https://github.com/SafaJanjirkar07 | LinkedIn: https://www.linkedin.com/in/safa-janjirkar-b82164288/
+
+**Shraddha Landge** | Enrollment No: 220220246
+GitHub: https://github.com/shraddha365 | LinkedIn: https://www.linkedin.com/in/shraddha-landge
+
+**Prathamesh Maurya** | Enrollment No: 220220178
+GitHub: https://github.com/btwitsrich | LinkedIn: https://www.linkedin.com/in/prathameshmaurya/
 
 ---
+
 
 ## ⭐ Acknowledgements
 
