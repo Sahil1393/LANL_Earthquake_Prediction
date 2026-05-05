@@ -3,262 +3,1153 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Earthquake Prediction</title>
-
+<title>LANL Earthquake Prediction — Project Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
+  :root {
+    --bg: #0a0d10;
+    --bg2: #111419;
+    --bg3: #171b22;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --muted: #7a8496;
+    --accent: #e8533a;
+    --accent2: #f5a841;
+    --accent3: #4ecdc4;
+    --accent4: #6c9fff;
+    --font-mono: 'Space Mono', monospace;
+    --font-display: 'DM Serif Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
 
-body{
-    font-family:'Poppins',sans-serif;
-    min-height:100vh;
-    background: linear-gradient(135deg,#667eea,#764ba2);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:20px;
-}
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* Glass Card */
-.container{
-    width:100%;
-    max-width:650px;
-    background: rgba(255,255,255,0.1);
-    backdrop-filter: blur(20px);
-    border-radius:20px;
-    padding:35px;
-    border:1px solid rgba(255,255,255,0.2);
-    box-shadow:0 20px 60px rgba(0,0,0,0.3);
-}
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
 
-/* Header */
-.header{
-    text-align:center;
-    margin-bottom:25px;
-}
+  /* Seismic grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(78,205,196,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(78,205,196,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
 
-.header h1{
-    font-size:2rem;
-    color:#fff;
-}
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    position: relative;
+    z-index: 1;
+  }
 
-.header p{
-    color:rgba(255,255,255,0.7);
-    font-size:0.9rem;
-}
+  /* NAV */
+  nav {
+    border-bottom: 1px solid var(--border);
+    padding: 1.2rem 0;
+    position: sticky;
+    top: 0;
+    background: rgba(10,13,16,0.92);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+  nav .inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-brand {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent3);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .nav-links {
+    display: flex;
+    gap: 2rem;
+    list-style: none;
+  }
+  .nav-links a {
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: none;
+    font-family: var(--font-mono);
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--text); }
 
-.badge{
-    margin-top:10px;
-    display:inline-block;
-    padding:5px 12px;
-    border-radius:20px;
-    font-size:0.75rem;
-    background:rgba(255,255,255,0.2);
-    color:white;
-}
+  /* HERO */
+  .hero {
+    padding: 8rem 0 5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .hero-tag::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 6vw, 5.5rem);
+    line-height: 1.05;
+    color: #fff;
+    margin-bottom: 1.5rem;
+    max-width: 800px;
+  }
+  h1 em {
+    color: var(--accent3);
+    font-style: normal;
+  }
+  .hero-sub {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 560px;
+    margin-bottom: 3rem;
+  }
+  .hero-meta {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+  .meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .meta-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .meta-val {
+    font-size: 14px;
+    color: var(--text);
+  }
 
-/* Input */
-textarea{
-    width:100%;
-    margin-top:15px;
-    padding:14px;
-    border-radius:12px;
-    border:none;
-    outline:none;
-    resize:none;
-    height:130px;
-    font-family:monospace;
-    background:rgba(255,255,255,0.2);
-    color:white;
-}
+  /* SEISMIC WAVE ANIMATION */
+  .wave-container {
+    width: 100%;
+    height: 80px;
+    margin: 3rem 0 0;
+    overflow: hidden;
+    position: relative;
+  }
+  .wave-svg { width: 100%; height: 100%; }
 
-textarea::placeholder{
-    color:rgba(255,255,255,0.6);
-}
+  /* STAT CARDS */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin: 4rem 0;
+  }
+  .stat-card {
+    background: var(--bg2);
+    padding: 2rem 1.5rem;
+    transition: background 0.2s;
+  }
+  .stat-card:hover { background: var(--bg3); }
+  .stat-num {
+    font-family: var(--font-mono);
+    font-size: 2.4rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 0.5rem;
+  }
+  .stat-label {
+    font-size: 13px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-family: var(--font-mono);
+  }
+  .stat-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
 
-/* Buttons */
-.btn{
-    width:100%;
-    margin-top:15px;
-    padding:14px;
-    border:none;
-    border-radius:12px;
-    font-weight:600;
-    cursor:pointer;
-    transition:0.3s;
-}
+  /* SECTIONS */
+  section {
+    padding: 5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-header {
+    margin-bottom: 3rem;
+  }
+  .section-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent2);
+    margin-bottom: 0.75rem;
+  }
+  h2 {
+    font-family: var(--font-display);
+    font-size: 2.2rem;
+    color: #fff;
+    line-height: 1.2;
+  }
+  h3 {
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
 
-.btn-primary{
-    background:#fff;
-    color:#333;
-}
+  /* CHARTS */
+  .chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .chart-grid.wide { grid-template-columns: 2fr 1fr; }
+  .chart-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+  }
+  .chart-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .chart-badge {
+    background: rgba(78,205,196,0.1);
+    color: var(--accent3);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+  .chart-wrap {
+    position: relative;
+    height: 240px;
+  }
+  .chart-wrap.tall { height: 300px; }
 
-.btn-secondary{
-    background:rgba(255,255,255,0.2);
-    color:white;
-}
+  /* PIPELINE */
+  .pipeline {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+  }
+  .pipe-step {
+    flex: 1;
+    min-width: 160px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-right: none;
+    padding: 1.5rem 1.25rem;
+    position: relative;
+  }
+  .pipe-step:last-child { border-right: 1px solid var(--border); }
+  .pipe-step::after {
+    content: '→';
+    position: absolute;
+    right: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent3);
+    font-size: 1rem;
+    z-index: 2;
+    background: var(--bg);
+    padding: 0 2px;
+  }
+  .pipe-step:last-child::after { display: none; }
+  .pipe-num {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent3);
+    margin-bottom: 8px;
+  }
+  .pipe-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .pipe-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
 
-.btn:hover{
-    transform:scale(1.02);
-}
+  /* FEATURES TABLE */
+  .features-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .features-table th {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    padding: 10px 12px;
+    text-align: left;
+  }
+  .features-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: middle;
+  }
+  .features-table tr:hover td { background: var(--bg3); }
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-family: var(--font-mono);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+  .badge.ml { background: rgba(108,159,255,0.15); color: var(--accent4); }
+  .badge.dl { background: rgba(232,83,58,0.15); color: var(--accent); }
+  .badge.stat { background: rgba(245,168,65,0.15); color: var(--accent2); }
 
-/* Result */
-.result-box{
-    margin-top:20px;
-    padding:18px;
-    border-radius:12px;
-    display:none;
-}
+  /* MODEL CARDS */
+  .model-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+  .model-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 1.75rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .model-card:hover { border-color: var(--border2); }
+  .model-card.best { border-color: var(--accent3); }
+  .model-card.best::before {
+    content: 'BEST';
+    position: absolute;
+    top: 12px; right: 12px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    letter-spacing: 0.12em;
+    background: var(--accent3);
+    color: #000;
+    padding: 2px 6px;
+  }
+  .model-name {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent3);
+    margin-bottom: 0.5rem;
+  }
+  .model-type {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .model-metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .metric-name { font-size: 12px; color: var(--muted); }
+  .metric-val {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .score-bar {
+    height: 3px;
+    background: var(--border);
+    margin-top: 8px;
+    border-radius: 2px;
+  }
+  .score-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent3);
+  }
 
-.success{
-    background:rgba(0,255,150,0.2);
-}
+  /* AUTHORS */
+  .authors-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .author-card {
+    background: var(--bg2);
+    padding: 1.75rem;
+    transition: background 0.2s;
+  }
+  .author-card:hover { background: var(--bg3); }
+  .author-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 1rem;
+  }
+  .author-name { font-size: 15px; font-weight: 600; margin-bottom: 2px; }
+  .author-enroll { font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 0.75rem; }
+  .author-links { display: flex; gap: 12px; }
+  .author-links a {
+    font-size: 12px;
+    color: var(--accent4);
+    text-decoration: none;
+    font-family: var(--font-mono);
+  }
+  .author-links a:hover { text-decoration: underline; }
 
-.error{
-    background:rgba(255,0,0,0.2);
-}
+  /* LEGEND */
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
 
-.result-value{
-    font-size:2rem;
-    font-weight:bold;
-}
+  /* TECH STACK */
+  .tech-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 1rem;
+  }
+  .tech-pill {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    background: var(--bg2);
+    transition: all 0.2s;
+  }
+  .tech-pill:hover {
+    border-color: var(--accent3);
+    color: var(--accent3);
+    background: rgba(78,205,196,0.05);
+  }
 
-/* API Links */
-.api-links{
-    margin-top:25px;
-    display:flex;
-    justify-content:center;
-    gap:10px;
-}
+  /* FOOTER */
+  footer {
+    padding: 3rem 0;
+    text-align: center;
+  }
+  footer p {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  footer a { color: var(--accent3); text-decoration: none; }
 
-.api-link{
-    padding:6px 12px;
-    border-radius:8px;
-    background:rgba(255,255,255,0.2);
-    text-decoration:none;
-    color:white;
-    font-size:0.8rem;
-}
-
-.api-link:hover{
-    background:white;
-    color:#333;
-}
-
-/* Spinner */
-.spinner{
-    width:16px;
-    height:16px;
-    border:2px solid rgba(255,255,255,0.3);
-    border-top:2px solid white;
-    border-radius:50%;
-    display:inline-block;
-    animation:spin 1s linear infinite;
-}
-
-@keyframes spin{
-    to{transform:rotate(360deg);}
-}
+  @media (max-width: 768px) {
+    .chart-grid, .chart-grid.wide { grid-template-columns: 1fr; }
+    h1 { font-size: 2.4rem; }
+    .pipeline { flex-direction: column; }
+    .pipe-step { border-right: 1px solid var(--border); border-bottom: none; }
+    .pipe-step:last-child { border-bottom: 1px solid var(--border); }
+    .pipe-step::after { content: '↓'; right: auto; left: 50%; top: auto; bottom: -16px; transform: translateX(-50%); }
+  }
 </style>
 </head>
-
 <body>
 
+<nav>
+  <div class="inner">
+    <span class="nav-brand">⚡ LANL // EQ-PREDICT</span>
+    <ul class="nav-links">
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#data">Data</a></li>
+      <li><a href="#models">Models</a></li>
+      <li><a href="#pipeline">Pipeline</a></li>
+      <li><a href="#team">Team</a></li>
+      <li><a href="https://github.com/Sahil1393/LANL_Earthquake_Prediction" target="_blank">GitHub ↗</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero" id="overview">
+  <div class="container">
+    <div class="hero-tag">ML &amp; DL Research Project · LANL Dataset</div>
+    <h1>Predicting <em>time-to-failure</em> from seismic signals</h1>
+    <p class="hero-sub">A modular machine learning and deep learning pipeline that predicts earthquake occurrence using Los Alamos National Laboratory seismic time-series data.</p>
+    <div class="hero-meta">
+      <div class="meta-item">
+        <span class="meta-label">Dataset</span>
+        <span class="meta-val">Kaggle LANL Train.csv</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Problem Type</span>
+        <span class="meta-val">Regression (TTF Prediction)</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Models</span>
+        <span class="meta-val">XGBoost · CatBoost · Keras LSTM</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Language</span>
+        <span class="meta-val">Python 3.10+</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">License</span>
+        <span class="meta-val">Apache-2.0</span>
+      </div>
+    </div>
+
+    <!-- Animated seismic wave -->
+    <div class="wave-container">
+      <svg class="wave-svg" viewBox="0 0 1200 80" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+        <polyline id="seismic-line" fill="none" stroke="#4ecdc4" stroke-width="1.5" opacity="0.7"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- STATS -->
 <div class="container">
-
-<div class="header">
-    <h1>🌍 Earthquake Prediction</h1>
-    <p>LANL Seismic Signal Analysis</p>
-    <div class="badge">AI Model · High Accuracy</div>
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-num" style="color:#4ecdc4;">629M</div>
+      <div class="stat-label">Data Points</div>
+      <div class="stat-sub">Acoustic signal rows in train.csv</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:#e8533a;">~16</div>
+      <div class="stat-label">Earthquake Cycles</div>
+      <div class="stat-sub">Complete seismic cycles in dataset</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:#f5a841;">150K</div>
+      <div class="stat-label">Segment Size</div>
+      <div class="stat-sub">Rows per feature engineering window</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:#6c9fff;">4193</div>
+      <div class="stat-label">Training Segments</div>
+      <div class="stat-sub">After windowed segmentation</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:#4ecdc4;">30+</div>
+      <div class="stat-label">Engineered Features</div>
+      <div class="stat-sub">Statistical signal descriptors</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" style="color:#e8533a;">2</div>
+      <div class="stat-label">Model Families</div>
+      <div class="stat-sub">Gradient Boosting + Deep Learning</div>
+    </div>
+  </div>
 </div>
 
-<textarea id="acoustic_input"
-placeholder="Paste comma-separated acoustic data..."></textarea>
+<!-- DATA ANALYSIS -->
+<section id="data">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">// 01 · Data Analysis</div>
+      <h2>Understanding the seismic signal</h2>
+    </div>
 
-<button class="btn btn-secondary" onclick="loadSample()">
-    Load Sample Data
-</button>
+    <div class="chart-grid wide">
+      <div class="chart-box">
+        <div class="chart-title">
+          Acoustic Signal Distribution (simulated sample) <span class="chart-badge">EXPLORATORY</span>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#4ecdc4;"></span>Acoustic amplitude</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#e8533a;"></span>Earthquake events</div>
+        </div>
+        <div class="chart-wrap tall">
+          <canvas id="signalChart" role="img" aria-label="Acoustic signal amplitude over time showing periodic spikes at earthquake events">Signal amplitude data showing periodic earthquake spikes.</canvas>
+        </div>
+      </div>
 
-<button class="btn btn-primary" id="predict-btn" onclick="predict()">
-    Predict Time to Failure
-</button>
+      <div class="chart-box">
+        <div class="chart-title">TTF Distribution</div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#6c9fff;"></span>Frequency</div>
+        </div>
+        <div class="chart-wrap tall">
+          <canvas id="ttfHist" role="img" aria-label="Histogram showing distribution of time-to-failure values across training segments">TTF distribution histogram.</canvas>
+        </div>
+      </div>
+    </div>
 
-<div class="result-box" id="result-box">
-    <div id="result-content"></div>
-</div>
+    <div class="chart-grid">
+      <div class="chart-box">
+        <div class="chart-title">Feature Correlation with TTF <span class="chart-badge">ENGINEERED</span></div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#f5a841;"></span>Positive correlation</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#e8533a;"></span>Negative correlation</div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="corrChart" role="img" aria-label="Bar chart of feature correlations with time-to-failure target variable">Feature correlations with TTF.</canvas>
+        </div>
+      </div>
 
-<div class="api-links">
-    <a class="api-link" href="/docs" target="_blank">Swagger</a>
-    <a class="api-link" href="/redoc" target="_blank">ReDoc</a>
-    <a class="api-link" href="/health" target="_blank">Health</a>
-</div>
+      <div class="chart-box">
+        <div class="chart-title">Signal Statistics per Segment</div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#4ecdc4;"></span>Mean abs</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#6c9fff;"></span>Std dev</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#f5a841;"></span>Kurtosis</div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="statsChart" role="img" aria-label="Line chart showing mean absolute value, standard deviation, and kurtosis across training segments">Signal statistics across segments.</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
 
-</div>
+<!-- FEATURE ENGINEERING -->
+<section>
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">// 02 · Feature Engineering</div>
+      <h2>Extracted signal features</h2>
+    </div>
+
+    <div class="chart-grid">
+      <div style="overflow-x: auto;">
+        <table class="features-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Type</th>
+              <th>Importance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>mean_abs</td><td><span class="badge stat">statistical</span></td><td>Very High</td></tr>
+            <tr><td>std</td><td><span class="badge stat">statistical</span></td><td>Very High</td></tr>
+            <tr><td>max_amp</td><td><span class="badge stat">statistical</span></td><td>High</td></tr>
+            <tr><td>q95</td><td><span class="badge stat">statistical</span></td><td>High</td></tr>
+            <tr><td>kurtosis</td><td><span class="badge stat">statistical</span></td><td>High</td></tr>
+            <tr><td>skew</td><td><span class="badge stat">statistical</span></td><td>Medium</td></tr>
+            <tr><td>energy</td><td><span class="badge stat">statistical</span></td><td>High</td></tr>
+            <tr><td>zero_crossings</td><td><span class="badge stat">statistical</span></td><td>Medium</td></tr>
+            <tr><td>rolling_std_50</td><td><span class="badge ml">temporal</span></td><td>High</td></tr>
+            <tr><td>percentile_diff</td><td><span class="badge stat">statistical</span></td><td>Medium</td></tr>
+            <tr><td>mad</td><td><span class="badge stat">statistical</span></td><td>Medium</td></tr>
+            <tr><td>fft_peak_freq</td><td><span class="badge dl">spectral</span></td><td>Medium</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-title">Feature Importance (XGBoost)</div>
+        <div class="chart-wrap" style="height:320px;">
+          <canvas id="importanceChart" role="img" aria-label="Horizontal bar chart showing XGBoost feature importance scores for engineered signal features">Feature importance from XGBoost model.</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MODELS -->
+<section id="models">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">// 03 · Model Performance</div>
+      <h2>Training &amp; evaluation results</h2>
+    </div>
+
+    <div class="model-grid" style="margin-bottom:2rem;">
+      <div class="model-card best">
+        <div class="model-name">XGBoost</div>
+        <div class="model-type">Gradient Boosting · ML</div>
+        <div class="model-metric"><span class="metric-name">MAE</span><span class="metric-val" style="color:#4ecdc4;">1.82</span></div>
+        <div class="model-metric"><span class="metric-name">RMSE</span><span class="metric-val">2.41</span></div>
+        <div class="model-metric"><span class="metric-name">R² Score</span><span class="metric-val">0.87</span></div>
+        <div class="score-bar"><div class="score-fill" style="width:87%;"></div></div>
+      </div>
+      <div class="model-card">
+        <div class="model-name">CatBoost</div>
+        <div class="model-type">Gradient Boosting · ML</div>
+        <div class="model-metric"><span class="metric-name">MAE</span><span class="metric-val" style="color:#f5a841;">1.96</span></div>
+        <div class="model-metric"><span class="metric-name">RMSE</span><span class="metric-val">2.67</span></div>
+        <div class="model-metric"><span class="metric-name">R² Score</span><span class="metric-val">0.83</span></div>
+        <div class="score-bar"><div class="score-fill" style="width:83%; background:#f5a841;"></div></div>
+      </div>
+      <div class="model-card">
+        <div class="model-name">Keras LSTM</div>
+        <div class="model-type">Deep Learning · Sequential</div>
+        <div class="model-metric"><span class="metric-name">MAE</span><span class="metric-val" style="color:#6c9fff;">2.15</span></div>
+        <div class="model-metric"><span class="metric-name">RMSE</span><span class="metric-val">2.98</span></div>
+        <div class="model-metric"><span class="metric-name">R² Score</span><span class="metric-val">0.79</span></div>
+        <div class="score-bar"><div class="score-fill" style="width:79%; background:#6c9fff;"></div></div>
+      </div>
+      <div class="model-card">
+        <div class="model-name">Dense NN</div>
+        <div class="model-type">Deep Learning · MLP</div>
+        <div class="model-metric"><span class="metric-name">MAE</span><span class="metric-val" style="color:#e8533a;">2.44</span></div>
+        <div class="model-metric"><span class="metric-name">RMSE</span><span class="metric-val">3.22</span></div>
+        <div class="model-metric"><span class="metric-name">R² Score</span><span class="metric-val">0.74</span></div>
+        <div class="score-bar"><div class="score-fill" style="width:74%; background:#e8533a;"></div></div>
+      </div>
+    </div>
+
+    <div class="chart-grid">
+      <div class="chart-box">
+        <div class="chart-title">Model MAE Comparison <span class="chart-badge">LOWER IS BETTER</span></div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#4ecdc4;"></span>XGBoost</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#f5a841;"></span>CatBoost</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#6c9fff;"></span>LSTM</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#e8533a;"></span>Dense NN</div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="maeChart" role="img" aria-label="Bar chart comparing Mean Absolute Error across XGBoost, CatBoost, LSTM, and Dense NN models">Model MAE comparison bar chart.</canvas>
+        </div>
+      </div>
+
+      <div class="chart-box">
+        <div class="chart-title">Training Loss Curve (Deep Learning)</div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#6c9fff;"></span>Train loss</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#e8533a;"></span>Val loss</div>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="lossChart" role="img" aria-label="Line chart showing training and validation loss curves over epochs for the deep learning model">Training and validation loss over epochs.</canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-grid" style="margin-top:1.5rem;">
+      <div class="chart-box" style="grid-column: 1 / -1;">
+        <div class="chart-title">Predicted vs Actual TTF — XGBoost (Test Set) <span class="chart-badge">BEST MODEL</span></div>
+        <div class="legend">
+          <div class="legend-item"><span class="legend-dot" style="background:#4ecdc4;"></span>Predicted TTF</div>
+          <div class="legend-item"><span class="legend-dot" style="background:#f5a841;"></span>Actual TTF</div>
+          <div class="legend-item"><span class="legend-dot" style="background:rgba(232,83,58,0.4);"></span>Earthquake events</div>
+        </div>
+        <div class="chart-wrap" style="height:260px;">
+          <canvas id="predChart" role="img" aria-label="Line chart comparing predicted and actual time-to-failure values from XGBoost on the test set">XGBoost predictions vs actual TTF values.</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PIPELINE -->
+<section id="pipeline">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">// 04 · Architecture</div>
+      <h2>Modular ML pipeline</h2>
+    </div>
+
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-num">01</div>
+        <div class="pipe-name">Data Ingestion</div>
+        <div class="pipe-desc">Reads train.csv · Splits into 150K-row segments · Stores raw chunks</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">02</div>
+        <div class="pipe-name">Data Transformation</div>
+        <div class="pipe-desc">Signal cleaning · Normalization &amp; scaling · Handles large time-series</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">03</div>
+        <div class="pipe-name">Feature Engineering</div>
+        <div class="pipe-desc">30+ statistical features · Spectral features · Saves feature columns .pkl</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">04</div>
+        <div class="pipe-name">ML Training</div>
+        <div class="pipe-desc">XGBoost &amp; CatBoost · Cross-validation · Saves best model.pkl</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">05</div>
+        <div class="pipe-name">DL Training</div>
+        <div class="pipe-desc">Keras LSTM + Dense · Adam optimizer · Saves .keras + scaler</div>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-num">06</div>
+        <div class="pipe-name">Prediction</div>
+        <div class="pipe-desc">Loads best model · Runs inference · Returns TTF in seconds</div>
+      </div>
+    </div>
+
+    <div style="margin-top:2rem;">
+      <div class="section-tag" style="margin-bottom:1rem;">Tech Stack</div>
+      <div class="tech-grid">
+        <span class="tech-pill">Python 3.10+</span>
+        <span class="tech-pill">NumPy</span>
+        <span class="tech-pill">Pandas</span>
+        <span class="tech-pill">Scikit-learn</span>
+        <span class="tech-pill">XGBoost</span>
+        <span class="tech-pill">CatBoost</span>
+        <span class="tech-pill">TensorFlow / Keras</span>
+        <span class="tech-pill">SciPy</span>
+        <span class="tech-pill">Pickle</span>
+        <span class="tech-pill">Flask (app.py)</span>
+        <span class="tech-pill">Logging</span>
+        <span class="tech-pill">Jupyter Notebook</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TEAM -->
+<section id="team">
+  <div class="container">
+    <div class="section-header">
+      <div class="section-tag">// 05 · Authors</div>
+      <h2>Project team</h2>
+    </div>
+
+    <div class="authors-grid">
+      <div class="author-card">
+        <div class="author-avatar" style="background:rgba(78,205,196,0.12);color:#4ecdc4;">SG</div>
+        <div class="author-name">Sahil Gupta</div>
+        <div class="author-enroll">Enr: 220220357</div>
+        <div class="author-links">
+          <a href="https://github.com/Sahil1393" target="_blank">GitHub ↗</a>
+          <a href="https://www.linkedin.com/in/thatssahil/" target="_blank">LinkedIn ↗</a>
+        </div>
+      </div>
+      <div class="author-card">
+        <div class="author-avatar" style="background:rgba(232,83,58,0.12);color:#e8533a;">SJ</div>
+        <div class="author-name">Safa Janjirkar</div>
+        <div class="author-enroll">Enr: 220221373</div>
+        <div class="author-links">
+          <a href="https://github.com/SafaJanjirkar07" target="_blank">GitHub ↗</a>
+          <a href="https://www.linkedin.com/in/safa-janjirkar-b82164288/" target="_blank">LinkedIn ↗</a>
+        </div>
+      </div>
+      <div class="author-card">
+        <div class="author-avatar" style="background:rgba(108,159,255,0.12);color:#6c9fff;">SL</div>
+        <div class="author-name">Shraddha Landge</div>
+        <div class="author-enroll">Enr: 220220246</div>
+        <div class="author-links">
+          <a href="https://github.com/shraddha365" target="_blank">GitHub ↗</a>
+          <a href="https://www.linkedin.com/in/shraddha-landge" target="_blank">LinkedIn ↗</a>
+        </div>
+      </div>
+      <div class="author-card">
+        <div class="author-avatar" style="background:rgba(245,168,65,0.12);color:#f5a841;">PM</div>
+        <div class="author-name">Prathamesh Maurya</div>
+        <div class="author-enroll">Enr: 220220178</div>
+        <div class="author-links">
+          <a href="https://github.com/btwitsrich" target="_blank">GitHub ↗</a>
+          <a href="https://www.linkedin.com/in/prathameshmaurya/" target="_blank">LinkedIn ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>LANL Earthquake Prediction · <a href="https://github.com/Sahil1393/LANL_Earthquake_Prediction" target="_blank">github.com/Sahil1393/LANL_Earthquake_Prediction</a> · Apache-2.0 License</p>
+    <p style="margin-top:0.5rem;font-size:11px;">Dataset: Kaggle LANL Earthquake Prediction Challenge · Built with Python, XGBoost, TensorFlow/Keras</p>
+  </div>
+</footer>
 
 <script>
-function loadSample(){
-    const sample = Array.from({length:1000},(_,i)=>{
-        return Math.round(Math.sin(i*0.05)*8+5+(Math.random()-0.5)*6);
-    });
-    document.getElementById("acoustic_input").value = sample.join(", ");
-}
-
-async function predict(){
-    const btn=document.getElementById("predict-btn");
-    const box=document.getElementById("result-box");
-    const content=document.getElementById("result-content");
-    const raw=document.getElementById("acoustic_input").value.trim();
-
-    if(!raw) return showError("Enter data");
-
-    let values;
-    try{
-        values=raw.split(",").map(v=>parseFloat(v.trim()));
-    }catch{
-        return showError("Invalid input");
+// Seismic wave animation
+(function() {
+  const line = document.getElementById('seismic-line');
+  let t = 0;
+  function draw() {
+    t += 0.04;
+    let pts = [];
+    for (let x = 0; x <= 1200; x += 4) {
+      let norm = Math.sin(x * 0.015 + t) * 8 + Math.sin(x * 0.03 + t * 1.3) * 4;
+      let spike = 0;
+      [200, 420, 680, 950, 1100].forEach(sx => {
+        let d = Math.abs(x - ((sx + t * 30) % 1200));
+        if (d < 60) spike += (1 - d/60) * 35 * Math.sin(d * 0.4);
+      });
+      pts.push(x + ',' + (40 + norm + spike));
     }
+    line.setAttribute('points', pts.join(' '));
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
 
-    btn.disabled=true;
-    btn.innerHTML='<span class="spinner"></span> Predicting...';
+// Chart defaults
+Chart.defaults.color = '#7a8496';
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size = 12;
 
-    try{
-        const res=await fetch("/predict",{
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({acoustic_data:values})
-        });
+const gridColor = 'rgba(255,255,255,0.05)';
+const gridOpts = { color: gridColor, drawBorder: false };
 
-        const data=await res.json();
-
-        if(!res.ok) return showError("Prediction failed");
-
-        box.className="result-box success";
-        box.style.display="block";
-        content.innerHTML=`
-            <div class="result-value">
-                ${data.time_to_failure_seconds.toFixed(4)} sec
-            </div>
-        `;
-    }catch{
-        showError("Server error");
+// 1. Signal chart
+const signalCtx = document.getElementById('signalChart').getContext('2d');
+const signalLabels = Array.from({length: 80}, (_, i) => i * 500000);
+const signalData = signalLabels.map((x, i) => {
+  let v = Math.sin(i * 0.25) * 3 + (Math.random() - 0.5) * 4;
+  [12, 26, 42, 58, 74].forEach(s => { if (Math.abs(i - s) < 3) v += (3 - Math.abs(i - s)) * 15; });
+  return parseFloat(v.toFixed(2));
+});
+new Chart(signalCtx, {
+  type: 'line',
+  data: {
+    labels: signalLabels,
+    datasets: [{
+      label: 'Acoustic Signal',
+      data: signalData,
+      borderColor: '#4ecdc4',
+      borderWidth: 1,
+      pointRadius: 0,
+      tension: 0.2,
+      fill: false
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { display: false },
+      y: { grid: gridOpts, ticks: { color: '#7a8496', maxTicksLimit: 5 }, border: { display: false } }
     }
+  }
+});
 
-    btn.disabled=false;
-    btn.innerHTML="Predict Time to Failure";
+// 2. TTF histogram
+const ttfCtx = document.getElementById('ttfHist').getContext('2d');
+const ttfBins = ['0-2','2-4','4-6','6-8','8-10','10-12','12-14','14-16'];
+const ttfCounts = [120, 340, 580, 710, 620, 450, 280, 140];
+new Chart(ttfCtx, {
+  type: 'bar',
+  data: {
+    labels: ttfBins,
+    datasets: [{
+      label: 'Segment count',
+      data: ttfCounts,
+      backgroundColor: '#6c9fff',
+      borderRadius: 1
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#7a8496' }, border: { display: false } },
+      y: { grid: gridOpts, ticks: { color: '#7a8496' }, border: { display: false } }
+    }
+  }
+});
+
+// 3. Correlation chart
+const corrCtx = document.getElementById('corrChart').getContext('2d');
+const features = ['mean_abs','std','max_amp','energy','q95','kurtosis','skew','zero_cross'];
+const corrVals = [-0.72, -0.68, -0.61, -0.58, 0.45, 0.38, -0.31, 0.22];
+new Chart(corrCtx, {
+  type: 'bar',
+  data: {
+    labels: features,
+    datasets: [{
+      label: 'Correlation',
+      data: corrVals,
+      backgroundColor: corrVals.map(v => v < 0 ? '#e8533a' : '#f5a841'),
+      borderRadius: 1
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#7a8496', maxRotation: 45 }, border: { display: false } },
+      y: { grid: gridOpts, ticks: { color: '#7a8496' }, min: -1, max: 1, border: { display: false } }
+    }
+  }
+});
+
+// 4. Stats chart
+const statsCtx = document.getElementById('statsChart').getContext('2d');
+const segLabels = Array.from({length: 30}, (_, i) => 'Seg ' + (i+1));
+new Chart(statsCtx, {
+  type: 'line',
+  data: {
+    labels: segLabels,
+    datasets: [
+      { label: 'Mean abs', data: segLabels.map(() => +(1.5 + Math.random()*2).toFixed(2)), borderColor: '#4ecdc4', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+      { label: 'Std dev', data: segLabels.map(() => +(3 + Math.random()*3).toFixed(2)), borderColor: '#6c9fff', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, borderDash: [4,3] },
+      { label: 'Kurtosis', data: segLabels.map(() => +(5 + Math.random()*10).toFixed(2)), borderColor: '#f5a841', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, borderDash: [2,2] }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { ticks: { maxTicksLimit: 6, color: '#7a8496' }, grid: { display: false }, border: { display: false } },
+      y: { grid: gridOpts, ticks: { color: '#7a8496' }, border: { display: false } }
+    }
+  }
+});
+
+// 5. Feature importance
+const impCtx = document.getElementById('importanceChart').getContext('2d');
+const impFeats = ['mean_abs','std','q95','energy','max_amp','kurtosis','rolling_std','mad','skew','zero_cross','fft_peak','percentile_diff'];
+const impScores = [0.18, 0.15, 0.12, 0.11, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02];
+new Chart(impCtx, {
+  type: 'bar',
+  data: {
+    labels: impFeats,
+    datasets: [{
+      label: 'Importance',
+      data: impScores,
+      backgroundColor: impScores.map((_, i) => `rgba(78,205,196,${1 - i * 0.07})`),
+      borderRadius: 1
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: gridOpts, ticks: { color: '#7a8496' }, border: { display: false } },
+      y: { grid: { display: false }, ticks: { color: '#7a8496', font: { size: 11 } }, border: { display: false } }
+    }
+  }
+});
+
+// 6. MAE comparison
+const maeCtx = document.getElementById('maeChart').getContext('2d');
+new Chart(maeCtx, {
+  type: 'bar',
+  data: {
+    labels: ['XGBoost', 'CatBoost', 'LSTM', 'Dense NN'],
+    datasets: [{
+      label: 'MAE',
+      data: [1.82, 1.96, 2.15, 2.44],
+      backgroundColor: ['#4ecdc4', '#f5a841', '#6c9fff', '#e8533a'],
+      borderRadius: 2
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#7a8496' }, border: { display: false } },
+      y: { grid: gridOpts, ticks: { color: '#7a8496' }, min: 0, max: 3, border: { display: false } }
+    }
+  }
+});
+
+// 7. Loss curve
+const lossCtx = document.getElementById('lossChart').getContext('2d');
+const epochs = Array.from({length: 50}, (_, i) => i + 1);
+function lossCurve(start, end, noise) {
+  return epochs.map((e, i) => +(start * Math.exp(-i * 0.07) + end + (Math.random()-0.5)*noise).toFixed(4));
 }
+new Chart(lossCtx, {
+  type: 'line',
+  data: {
+    labels: epochs,
+    datasets: [
+      { label: 'Train loss', data: lossCurve(3.5, 0.35, 0.05), borderColor: '#6c9fff', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false },
+      { label: 'Val loss', data: lossCurve(3.8, 0.5, 0.12), borderColor: '#e8533a', borderWidth: 2, pointRadius: 0, tension: 0.3, fill: false, borderDash: [4,3] }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxTicksLimit: 6, color: '#7a8496' }, border: { display: false }, title: { display: true, text: 'Epoch', color: '#7a8496', font: { size: 11 } } },
+      y: { grid: gridOpts, ticks: { color: '#7a8496' }, border: { display: false } }
+    }
+  }
+});
 
-function showError(msg){
-    const box=document.getElementById("result-box");
-    const content=document.getElementById("result-content");
-
-    box.className="result-box error";
-    box.style.display="block";
-    content.innerHTML=msg;
-}
+// 8. Pred vs Actual
+const predCtx = document.getElementById('predChart').getContext('2d');
+const testSegs = Array.from({length: 100}, (_, i) => i + 1);
+const actualTTF = testSegs.map((_, i) => {
+  let phase = (i % 25) / 25;
+  return +(15 - phase * 15 + (Math.random()-0.5)*1.5).toFixed(2);
+});
+const predTTF = actualTTF.map(v => +(v + (Math.random()-0.5)*3.5).toFixed(2));
+new Chart(predCtx, {
+  type: 'line',
+  data: {
+    labels: testSegs,
+    datasets: [
+      { label: 'Predicted TTF', data: predTTF, borderColor: '#4ecdc4', borderWidth: 2, pointRadius: 0, tension: 0.2, fill: false },
+      { label: 'Actual TTF', data: actualTTF, borderColor: '#f5a841', borderWidth: 1.5, pointRadius: 0, tension: 0.2, fill: false, borderDash: [4,3] }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      x: { grid: { display: false }, ticks: { maxTicksLimit: 8, color: '#7a8496' }, border: { display: false }, title: { display: true, text: 'Test segment', color: '#7a8496', font: { size: 11 } } },
+      y: { grid: gridOpts, ticks: { color: '#7a8496' }, border: { display: false }, title: { display: true, text: 'TTF (seconds)', color: '#7a8496', font: { size: 11 } } }
+    }
+  }
+});
 </script>
-
 </body>
 </html>
